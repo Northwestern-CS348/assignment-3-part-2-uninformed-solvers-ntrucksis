@@ -34,7 +34,21 @@ class TowerOfHanoiGame(GameMaster):
             A Tuple of Tuples that represent the game state
         """
         ### student code goes here
-        pass
+        
+        tuple_trio = [list(), list(), list()]
+        order = []
+        kb = self.kb
+        ask = 'fact: (on ?disk ?peg)'
+        states = kb.kb_ask(parse_input(ask))
+        if (len(states) > 0):
+            for state in states:
+                tuple_trio[int(state['?peg'][3])-1].append(int(state['?disk'][4]))
+        
+        for n in tuple_trio:
+            x = tuple(sorted(n))
+            order.append(x)
+        return tuple(order)
+        
 
     def makeMove(self, movable_statement):
         """
@@ -53,7 +67,35 @@ class TowerOfHanoiGame(GameMaster):
             None
         """
         ### Student code goes here
-        pass
+        kb = self.kb
+        tl = []
+        for i in movable_statement.terms:
+            tl.append(str(i))
+        a = [parse_input('fact: (top ' + tl[0] + ' ' + tl[2] + ')')]
+        r = [parse_input('fact: (top ' + tl[0] + ' ' + tl[1] + ')')]
+        ans_1 = kb.kb_ask(parse_input('fact: (top ?disk ' + tl[2] + ')'))
+        if not ans_1:
+            a.append(parse_input('fact: (onPeg ' + tl[0] + ' ' + tl[2] + ')'))
+            r.append(parse_input('fact: (empty ' + tl[2] + ')'))
+        else:
+            a.append(parse_input('fact: (onDisk ' + tl[0] + ' ' + ans_1[0]['?disk'] + ')'))
+            r.append(parse_input('fact: (top ' + ans_1[0]['?disk'] + ' ' + tl[2] + ')'))
+
+        ans_2 = kb.kb_ask(parse_input('fact: (onDisk ' + tl[0] + ' ?disk)'))
+        if ans_2:
+            a.append(parse_input('fact: (top ' + ans_2[0]['?disk'] + ' ' + tl[1] + ')'))
+            r.append(parse_input('fact: (onDisk ' + tl[0] + ' ' + ans_2[0]['?disk'] + ')'))
+        else:
+            a.append(parse_input('fact: (empty ' + tl[1] + ')'))
+            r.append(parse_input('fact: (onPeg ' + tl[0] + ' ' + tl[1] + ')'))
+            
+        for f in r:
+                kb.kb_retract(f)
+        for f in a:
+                kb.kb_assert(f)
+                
+
+        
 
     def reverseMove(self, movable_statement):
         """
